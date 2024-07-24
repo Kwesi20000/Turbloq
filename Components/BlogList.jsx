@@ -1,39 +1,63 @@
-import { blog_data } from '@/assets/assets'
-import React, { useEffect, useState } from 'react'
-import BlogItems from './BlogItems'
-import axios from 'axios'
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import BlogItems from './BlogItems';
 
 const BlogList = () => {
-  const [menu,setMenu] = useState("All");
-  const [blogs,setBlogs] = useState([]);
+  const [menu, setMenu] = useState("All");
+  const [blogs, setBlogs] = useState([]);
 
-
+  // Fetch blogs from the server
   const fetchBlogs = async () => {
-    const response = await axios.get('/api/blog');
-    setBlogs(response.data.blogs);
-    console.log(response.data.blogs);
-  }
+    try {
+      const response = await axios.get('/api/blog');
+      setBlogs(response.data.blogs);
+    } catch (error) {
+      console.error("Failed to fetch blogs:", error);
+    }
+  };
 
-  useEffect(()=>{
+  // Fetch blogs when component mounts
+  useEffect(() => {
     fetchBlogs();
-  },[])
+  }, []);
 
+  // Filter blogs based on selected category
+  const filteredBlogs = menu === "All" ? blogs : blogs.filter(blog => blog.category === menu);
 
   return (
-    <div>
+    <div className='p-5'>
+      {/* Category Menu */}
       <div className='flex justify-center gap-6 my-10'>
-        <button onClick={()=>setMenu('All')} className={menu==="All"?'bg-black text-white py-1 px-4 rounded sm':""}>All</button>
-        <button onClick={()=>setMenu('Technology')} className={menu==="Technology"?'bg-black text-white py-1 px-4 rounded sm':""}>Technology</button>
-        <button onClick={()=>setMenu('Startup')} className={menu==="Startup"?'bg-black text-white py-1 px-4 rounded sm':""}>Startup</button>
-        <button onClick={()=>setMenu('Lifestyle')} className={menu==="Lifestyle"?'bg-black text-white py-1 px-4 rounded sm':""}>Lifestyle</button>
+        {['All', 'Technology', 'Startup', 'Lifestyle'].map((category) => (
+          <button
+            key={category}
+            onClick={() => setMenu(category)}
+            className={`py-2 px-4 rounded ${menu === category ? 'bg-black text-white' : 'bg-gray-200 text-black'}`}
+          >
+            {category}
+          </button>
+        ))}
       </div>
-      <div className='flex flex-wrap justify-around gap-1 gap-y-10 mb-16 xl:mx-24'>
-        {blogs.filter((item)=> menu==="All"?true:item.category===menu).map((item,index)=>{
-          return <BlogItems key={index} id={item._id} image={item.image} title={item.title} description={item.description} category={item.category} />
-        })}
+
+      {/* Blog List */}
+      <div className='flex flex-wrap justify-around gap-4 mb-16 xl:mx-24'>
+        {filteredBlogs.length > 0 ? (
+          filteredBlogs.map((item) => (
+            <BlogItems
+              key={item._id}
+              id={item._id}
+              image={item.image}
+              title={item.title}
+              description={item.description}
+              category={item.category}
+            />
+          ))
+        ) : (
+          <p className='text-center w-full text-lg'>No blogs available for this category.</p>
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BlogList
+export default BlogList;
